@@ -1,0 +1,1999 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bakti Sosial Edukasi Digital — Platform Pembelajaran Premium</title>
+
+<!-- Fonts: Rajdhani (futuristic headers) + DM Sans (body) -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+
+<!-- html2canvas & jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+/* ============================================================
+   RESET & CSS VARIABLES
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Dark Blue Palette */
+  --bg-deep:    #050D1A;
+  --bg-base:    #071226;
+  --bg-card:    #0B1E3A;
+  --bg-raised:  #102B52;
+  --bg-hover:   #143566;
+
+  /* Accent */
+  --cyan:       #00E5FF;
+  --cyan-dim:   #00B8CC;
+  --cyan-glow:  rgba(0,229,255,0.15);
+  --cyan-soft:  rgba(0,229,255,0.08);
+  --blue-mid:   #1A6EFF;
+  --blue-soft:  rgba(26,110,255,0.15);
+
+  /* Text */
+  --text-white: #F0F6FF;
+  --text-light: #A8C0D8;
+  --text-muted: #4E6A85;
+
+  /* Status */
+  --green:      #00E5A0;
+  --green-dim:  rgba(0,229,160,0.12);
+  --red:        #FF4757;
+  --red-dim:    rgba(255,71,87,0.12);
+  --gold:       #FFD166;
+  --gold-dim:   rgba(255,209,102,0.12);
+
+  /* Borders */
+  --border:     rgba(0,229,255,0.12);
+  --border-mid: rgba(0,229,255,0.25);
+  --border-hot: rgba(0,229,255,0.5);
+
+  /* Misc */
+  --font-head:  'Rajdhani', sans-serif;
+  --font-body:  'DM Sans', sans-serif;
+  --font-mono:  'Share Tech Mono', monospace;
+  --trans:      all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text-white);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--cyan-dim); }
+
+/* ============================================================
+   CANVAS PARTICLE BACKGROUND
+   ============================================================ */
+#particleCanvas {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; opacity: 0.4;
+}
+
+/* ============================================================
+   PAGES
+   ============================================================ */
+.page { display: none; position: relative; z-index: 1; min-height: 100vh; }
+.page.active { display: block; animation: pgIn 0.45s ease; }
+@keyframes pgIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   NAVBAR
+   ============================================================ */
+.navbar {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(7,18,38,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex; align-items: center;
+  height: 64px;
+  gap: 16px;
+}
+.navbar-brand {
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+.navbar-brand img { height: 36px; width: auto; object-fit: contain; }
+.navbar-line { width: 1px; height: 28px; background: var(--border-mid); margin: 0 4px; flex-shrink:0; }
+.navbar-nav { display: flex; gap: 4px; margin-left: auto; }
+.nav-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-light);
+  font-family: var(--font-head);
+  font-weight: 600; font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: var(--trans);
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 7px;
+}
+.nav-btn img { width: 16px; height: 16px; object-fit: contain; filter: brightness(0.7); transition: var(--trans); }
+.nav-btn:hover, .nav-btn.active {
+  color: var(--cyan);
+  border-color: var(--border-mid);
+  background: var(--cyan-soft);
+}
+.nav-btn:hover img, .nav-btn.active img { filter: brightness(1) hue-rotate(0deg) saturate(3); }
+
+/* Hamburger */
+.hamburger {
+  display: none; flex-direction: column; gap: 5px;
+  background: none; border: 1px solid var(--border-mid); padding: 8px;
+  cursor: pointer; margin-left: auto;
+}
+.hamburger span {
+  display: block; width: 20px; height: 2px;
+  background: var(--cyan); transition: var(--trans);
+}
+
+/* Mobile Sidebar */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7); z-index: 300;
+}
+.sidebar-overlay.show { display: block; }
+.sidebar {
+  position: fixed; top: 0; left: -280px; bottom: 0; width: 280px;
+  background: var(--bg-card); border-right: 1px solid var(--border-mid);
+  z-index: 301; transition: left 0.3s ease; padding: 24px 0;
+  overflow-y: auto;
+}
+.sidebar.open { left: 0; }
+.sidebar-logo { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.sidebar-logo img { height: 36px; object-fit: contain; }
+.sidebar-nav { display: flex; flex-direction: column; gap: 4px; padding: 0 12px; }
+.sidebar-btn {
+  display: flex; align-items: center; gap: 12px;
+  background: none; border: 1px solid transparent;
+  color: var(--text-light); font-family: var(--font-head);
+  font-weight: 600; font-size: 1rem; letter-spacing: 0.06em;
+  padding: 12px 16px; cursor: pointer; text-transform: uppercase;
+  text-align: left; transition: var(--trans);
+}
+.sidebar-btn img { width: 20px; height: 20px; object-fit: contain; filter: brightness(0.6); transition: var(--trans); }
+.sidebar-btn:hover, .sidebar-btn.active {
+  color: var(--cyan); border-color: var(--border-mid); background: var(--cyan-soft);
+}
+.sidebar-btn:hover img, .sidebar-btn.active img { filter: brightness(1) saturate(3); }
+.sidebar-close {
+  position: absolute; top: 16px; right: 16px;
+  background: none; border: 1px solid var(--border-mid);
+  color: var(--text-light); width: 32px; height: 32px;
+  cursor: pointer; font-size: 1rem; transition: var(--trans);
+  display: flex; align-items: center; justify-content: center;
+}
+.sidebar-close:hover { color: var(--cyan); border-color: var(--cyan); }
+
+/* ============================================================
+   COMMON COMPONENTS
+   ============================================================ */
+.section-wrap { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+
+.section-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--cyan); font-family: var(--font-mono);
+  font-size: 0.75rem; letter-spacing: 0.2em;
+  text-transform: uppercase; margin-bottom: 14px;
+}
+.section-tag::before, .section-tag::after {
+  content: ''; display: block; width: 24px; height: 1px; background: var(--cyan);
+}
+
+.section-title {
+  font-family: var(--font-head);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700; letter-spacing: 0.04em;
+  color: var(--text-white); line-height: 1.15;
+  text-transform: uppercase;
+}
+.section-title span { color: var(--cyan); }
+
+.section-sub { color: var(--text-light); font-size: 0.95rem; max-width: 500px; margin-top: 10px; }
+
+/* Card base */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  position: relative; overflow: hidden;
+  transition: var(--trans);
+}
+.card::before {
+  content: ''; position: absolute;
+  inset: 0; background: linear-gradient(135deg, var(--cyan-soft), transparent);
+  opacity: 0; transition: var(--trans);
+}
+.card:hover { border-color: var(--border-mid); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,229,255,0.08); }
+.card:hover::before { opacity: 1; }
+
+/* Glow line */
+.glow-line { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); margin: 0; }
+.glow-line-v { width: 1px; background: linear-gradient(180deg, transparent, var(--cyan), transparent); }
+
+/* Button Primary */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: transparent;
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  font-family: var(--font-head); font-weight: 600;
+  font-size: 1rem; letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 14px 36px; cursor: pointer;
+  position: relative; overflow: hidden;
+  transition: var(--trans);
+}
+.btn-primary::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--cyan);
+  transform: translateX(-101%); transition: transform 0.3s ease;
+}
+.btn-primary:hover::before { transform: translateX(0); }
+.btn-primary:hover { color: var(--bg-deep); box-shadow: 0 0 30px rgba(0,229,255,0.3); }
+.btn-primary span, .btn-primary img { position: relative; z-index: 1; }
+
+.btn-gold {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: var(--font-head); font-weight: 600;
+  font-size: 1rem; letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 14px 36px; cursor: pointer;
+  position: relative; overflow: hidden;
+  transition: var(--trans);
+}
+.btn-gold::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--gold);
+  transform: translateX(-101%); transition: transform 0.3s ease;
+}
+.btn-gold:hover::before { transform: translateX(0); }
+.btn-gold:hover { color: var(--bg-deep); box-shadow: 0 0 30px rgba(255,209,102,0.25); }
+.btn-gold span, .btn-gold img { position: relative; z-index: 1; }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: transparent;
+  border: 1px solid var(--border-mid);
+  color: var(--text-light);
+  font-family: var(--font-head); font-weight: 600;
+  font-size: 0.9rem; letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 12px 28px; cursor: pointer;
+  transition: var(--trans);
+}
+.btn-ghost:hover { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-soft); }
+
+/* ============================================================
+   LOADING SCREEN
+   ============================================================ */
+#loadingScreen {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg-deep);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  transition: opacity 0.5s;
+}
+#loadingScreen.hide { opacity: 0; pointer-events: none; }
+.loader-ring {
+  width: 72px; height: 72px; position: relative; margin-bottom: 24px;
+}
+.loader-ring::before, .loader-ring::after {
+  content: ''; position: absolute; inset: 0; border: 2px solid transparent;
+  border-radius: 50%;
+}
+.loader-ring::before { border-top-color: var(--cyan); animation: spin 1s linear infinite; }
+.loader-ring::after  { border-bottom-color: var(--blue-mid); animation: spin 1.5s linear infinite reverse; inset: 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loader-text {
+  font-family: var(--font-mono); color: var(--cyan);
+  font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase;
+}
+.loader-bar-wrap { width: 200px; height: 2px; background: var(--bg-raised); margin-top: 20px; overflow: hidden; }
+.loader-bar { height: 100%; background: var(--cyan); animation: loaderAnim 1.8s ease-in-out infinite; }
+@keyframes loaderAnim { 0%{width:0;margin-left:0} 50%{width:60%;margin-left:40%} 100%{width:0;margin-left:100%} }
+
+/* Processing overlay */
+#processingOverlay {
+  display: none; position: fixed; inset: 0; z-index: 8000;
+  background: rgba(5,13,26,0.92); backdrop-filter: blur(12px);
+  flex-direction: column; align-items: center; justify-content: center;
+}
+#processingOverlay.show { display: flex; }
+.processing-text { font-family: var(--font-mono); color: var(--cyan); font-size: 0.9rem; margin-top: 16px; letter-spacing: 0.15em; }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 7000;
+  background: var(--bg-raised); border: 1px solid var(--border-mid);
+  color: var(--text-white); font-size: 0.88rem; font-weight: 500;
+  padding: 14px 20px; max-width: 320px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  opacity: 0; transform: translateX(20px);
+  transition: all 0.3s ease; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(0); }
+
+/* ============================================================
+   HOME PAGE
+   ============================================================ */
+.hero {
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 80px 20px; text-align: center; position: relative;
+}
+
+/* Animated grid bg */
+.hero-grid {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+}
+
+.hero-glow {
+  position: absolute; top: 20%; left: 50%;
+  transform: translateX(-50%);
+  width: 600px; height: 300px;
+  background: radial-gradient(ellipse, rgba(0,229,255,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Logo section */
+.hero-logos {
+  display: flex; align-items: center; justify-content: center;
+  gap: 40px; margin-bottom: 48px; flex-wrap: wrap;
+  position: relative; z-index: 2;
+}
+.logo-multimedia {
+  height: 44px; width: auto; max-width: 320px; object-fit: contain;
+  filter: brightness(1.1);
+}
+.logo-divider { width: 1px; height: 48px; background: var(--border-mid); }
+.logo-baksos {
+  height: 80px; width: 80px; object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(0,229,255,0.2));
+}
+
+/* Status indicator */
+.status-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid var(--border-mid);
+  background: var(--cyan-soft);
+  padding: 7px 18px; margin-bottom: 28px;
+  position: relative; z-index: 2;
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: blink 1.5s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.status-chip span { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-light); letter-spacing: 0.15em; text-transform: uppercase; }
+
+.hero-title {
+  font-family: var(--font-head); font-weight: 700;
+  font-size: clamp(2.2rem, 7vw, 5rem);
+  letter-spacing: 0.06em; line-height: 1.1;
+  text-transform: uppercase; margin-bottom: 8px;
+  position: relative; z-index: 2;
+}
+.hero-title .line1 { color: var(--text-white); display: block; }
+.hero-title .line2 { color: var(--cyan); display: block; text-shadow: 0 0 40px rgba(0,229,255,0.3); }
+
+.hero-subtitle {
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  color: var(--text-light); max-width: 560px;
+  margin: 0 auto 14px; position: relative; z-index: 2;
+  letter-spacing: 0.02em;
+}
+.hero-theme {
+  font-family: var(--font-mono); font-size: 0.8rem;
+  color: var(--cyan-dim); letter-spacing: 0.1em;
+  border: 1px solid var(--border); padding: 8px 20px;
+  margin-bottom: 36px; position: relative; z-index: 2;
+  display: inline-block;
+}
+
+/* Stats row */
+.hero-stats {
+  display: flex; gap: 0; margin-bottom: 48px;
+  border: 1px solid var(--border); position: relative; z-index: 2;
+  flex-wrap: wrap;
+}
+.stat-item {
+  flex: 1; min-width: 110px; padding: 20px 24px; text-align: center;
+  border-right: 1px solid var(--border); position: relative;
+  transition: var(--trans);
+}
+.stat-item:last-child { border-right: none; }
+.stat-item:hover { background: var(--cyan-soft); }
+.stat-icon { width: 28px; height: 28px; margin: 0 auto 8px; object-fit: contain; filter: hue-rotate(180deg) brightness(2); }
+.stat-val {
+  font-family: var(--font-head); font-size: 1.6rem; font-weight: 700;
+  color: var(--cyan); display: block;
+}
+.stat-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+
+.hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 2; }
+
+.organizer-badge {
+  margin-top: 40px; padding: 16px 32px;
+  border-top: 1px solid var(--border); position: relative; z-index: 2;
+  font-family: var(--font-mono); font-size: 0.75rem;
+  color: var(--text-muted); letter-spacing: 0.12em; text-transform: uppercase;
+}
+.organizer-badge strong { color: var(--text-light); font-weight: 400; }
+
+/* ============================================================
+   MATERI PAGE
+   ============================================================ */
+.page-header {
+  padding: 48px 20px 32px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--bg-card) 0%, transparent 100%);
+}
+
+/* Progress Learning */
+.learning-progress {
+  max-width: 1100px; margin: 0 auto 0;
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 20px 28px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+}
+.lp-label { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.15em; text-transform: uppercase; white-space: nowrap; }
+.lp-bar-wrap { flex: 1; height: 4px; background: var(--bg-raised); min-width: 100px; }
+.lp-bar { height: 100%; background: linear-gradient(90deg, var(--blue-mid), var(--cyan)); transition: width 0.6s ease; width: 0%; }
+.lp-count { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; color: var(--cyan); white-space: nowrap; }
+.lp-pct { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
+
+/* Material grid */
+.material-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px; padding: 24px 20px 60px;
+  max-width: 1100px; margin: 0 auto;
+}
+
+.mat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  overflow: hidden; transition: var(--trans);
+  cursor: pointer;
+}
+.mat-card:hover { border-color: var(--border-mid); box-shadow: 0 8px 32px rgba(0,229,255,0.06); }
+.mat-card.open { border-color: var(--border-mid); }
+
+.mat-head {
+  padding: 18px 20px; display: flex; align-items: center; gap: 14px;
+}
+.mat-icon-wrap {
+  width: 48px; height: 48px; flex-shrink: 0;
+  border: 1px solid var(--border); background: var(--bg-raised);
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--trans);
+}
+.mat-card:hover .mat-icon-wrap, .mat-card.open .mat-icon-wrap {
+  border-color: var(--cyan); background: var(--cyan-soft);
+}
+.mat-icon-wrap img { width: 26px; height: 26px; object-fit: contain; filter: brightness(0) invert(1) sepia(1) hue-rotate(170deg) saturate(3); }
+.mat-info { flex: 1; }
+.mat-num { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); letter-spacing: 0.15em; margin-bottom: 3px; }
+.mat-title { font-family: var(--font-head); font-size: 1rem; font-weight: 600; color: var(--text-white); letter-spacing: 0.03em; }
+.mat-read-badge { font-family: var(--font-mono); font-size: 0.62rem; color: var(--green); background: var(--green-dim); padding: 2px 8px; margin-left: 8px; letter-spacing: 0.1em; }
+.mat-chevron { color: var(--text-muted); font-size: 0.8rem; transition: transform 0.3s; flex-shrink: 0; }
+.mat-card.open .mat-chevron { transform: rotate(180deg); color: var(--cyan); }
+
+.mat-body { max-height: 0; overflow: hidden; transition: max-height 0.5s ease; }
+.mat-body.open { max-height: 1200px; }
+.mat-body-inner { padding: 0 20px 20px; border-top: 1px solid var(--border); }
+
+.mat-desc { font-size: 0.9rem; color: var(--text-light); line-height: 1.7; padding: 16px 0 14px; }
+
+.mat-points { list-style: none; margin-bottom: 14px; }
+.mat-points li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 0.86rem; color: var(--text-light); margin-bottom: 8px; line-height: 1.5;
+}
+.mat-points li::before {
+  content: ''; display: block; width: 6px; height: 6px;
+  border: 1px solid var(--cyan); flex-shrink: 0; margin-top: 6px;
+}
+
+.mat-example {
+  background: var(--bg-raised); border-left: 2px solid var(--cyan);
+  padding: 12px 16px; margin-bottom: 14px;
+  font-size: 0.86rem; color: var(--text-light); line-height: 1.6;
+}
+.mat-example strong { display: block; color: var(--cyan); margin-bottom: 4px; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* Mini Quiz */
+.mini-quiz {
+  background: var(--bg-raised); border: 1px solid var(--border);
+  padding: 16px;
+}
+.mini-quiz .mq-label { font-family: var(--font-mono); font-size: 0.68rem; color: var(--cyan); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+.mini-quiz .mq-q { font-size: 0.9rem; color: var(--text-white); font-weight: 500; margin-bottom: 12px; }
+.mini-quiz .mq-opts { display: flex; flex-direction: column; gap: 8px; }
+.mini-quiz .mq-opt {
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text-light); font-size: 0.84rem;
+  padding: 10px 14px; cursor: pointer; text-align: left;
+  transition: var(--trans); font-family: var(--font-body);
+  display: flex; align-items: center; gap: 10px;
+}
+.mini-quiz .mq-opt:hover { border-color: var(--cyan); color: var(--text-white); background: var(--cyan-soft); }
+.mini-quiz .mq-opt.correct { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+.mini-quiz .mq-opt.wrong   { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+.mq-opt-letter { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); flex-shrink: 0; }
+.mq-feedback { font-family: var(--font-mono); font-size: 0.75rem; margin-top: 10px; letter-spacing: 0.08em; }
+
+/* ============================================================
+   UJIAN PAGE
+   ============================================================ */
+.exam-wrap { max-width: 800px; margin: 0 auto; padding: 32px 20px 60px; }
+
+/* Name input */
+.name-gate {
+  border: 1px solid var(--border); background: var(--bg-card);
+  padding: 60px 40px; text-align: center; margin-top: 40px;
+  position: relative; overflow: hidden;
+}
+.name-gate::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+}
+.name-gate-icon { width: 64px; height: 64px; object-fit: contain; margin: 0 auto 20px; display: block; filter: brightness(0) invert(1) sepia(1) hue-rotate(170deg) saturate(2); }
+.name-gate h3 { font-family: var(--font-head); font-size: 2rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-white); margin-bottom: 8px; }
+.name-gate p { color: var(--text-light); font-size: 0.9rem; margin-bottom: 32px; }
+.name-input-wrap { max-width: 400px; margin: 0 auto; }
+.name-input {
+  width: 100%; background: var(--bg-raised);
+  border: 1px solid var(--border-mid); border-top: none; border-left: none; border-right: none;
+  border-bottom: 2px solid var(--cyan-dim);
+  color: var(--text-white); font-family: var(--font-head); font-size: 1.1rem;
+  font-weight: 600; letter-spacing: 0.05em;
+  padding: 14px 16px; outline: none; transition: var(--trans);
+  text-align: center;
+}
+.name-input:focus { border-bottom-color: var(--cyan); box-shadow: 0 4px 20px rgba(0,229,255,0.1); }
+.name-input::placeholder { color: var(--text-muted); font-weight: 400; font-size: 0.9rem; }
+.exam-info-row {
+  display: flex; gap: 0; border: 1px solid var(--border);
+  margin: 24px 0 32px; flex-wrap: wrap;
+}
+.exam-info-cell {
+  flex: 1; padding: 14px; text-align: center;
+  border-right: 1px solid var(--border); min-width: 90px;
+}
+.exam-info-cell:last-child { border-right: none; }
+.exam-info-cell .eic-val { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; color: var(--cyan); }
+.exam-info-cell .eic-key { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 3px; }
+
+/* Exam header */
+.exam-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 16px 20px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  margin-bottom: 16px; flex-wrap: wrap;
+}
+.exam-hdr-name { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); letter-spacing: 0.1em; }
+.exam-hdr-name strong { color: var(--text-light); font-weight: 400; }
+.exam-progress-text { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); }
+.exam-progress-text strong { color: var(--cyan); }
+.timer {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 1rem;
+  color: var(--cyan); border: 1px solid var(--border-mid);
+  padding: 8px 16px; background: var(--bg-raised);
+}
+.timer.warn { color: var(--red); border-color: var(--red); animation: timerPulse 1s ease-in-out infinite; }
+@keyframes timerPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+.timer-icon { width: 14px; height: 14px; object-fit: contain; filter: brightness(0) invert(1) sepia(1) hue-rotate(170deg) saturate(3); }
+.timer.warn .timer-icon { filter: brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(300deg); }
+
+/* Progress bar exam */
+.exam-prog-bar { height: 3px; background: var(--bg-raised); margin-bottom: 16px; }
+.exam-prog-fill { height: 100%; background: linear-gradient(90deg, var(--blue-mid), var(--cyan)); transition: width 0.4s ease; width: 0%; }
+
+/* Q dots */
+.q-dots-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.q-dot {
+  width: 30px; height: 30px; border: 1px solid var(--border);
+  background: var(--bg-card); color: var(--text-muted);
+  font-family: var(--font-mono); font-size: 0.68rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: var(--trans);
+}
+.q-dot:hover { border-color: var(--cyan); color: var(--cyan); }
+.q-dot.answered { background: var(--bg-raised); border-color: var(--cyan-dim); color: var(--cyan); }
+.q-dot.current { border-color: var(--cyan); background: var(--cyan-soft); color: var(--cyan); box-shadow: 0 0 12px rgba(0,229,255,0.2); }
+
+/* Question card */
+.q-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 28px; margin-bottom: 16px; position: relative; overflow: hidden;
+}
+.q-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--blue-mid), var(--cyan));
+}
+.q-num-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--cyan); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 14px; }
+.q-text { font-family: var(--font-head); font-size: 1.15rem; font-weight: 600; color: var(--text-white); line-height: 1.5; margin-bottom: 24px; letter-spacing: 0.02em; }
+
+.options-list { display: flex; flex-direction: column; gap: 10px; }
+.opt-btn {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--bg-raised); border: 1px solid var(--border);
+  color: var(--text-light); padding: 14px 18px; cursor: pointer;
+  text-align: left; transition: var(--trans); font-family: var(--font-body); font-size: 0.92rem;
+  position: relative; overflow: hidden;
+}
+.opt-btn::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+  background: var(--cyan-soft); transition: width 0.3s ease;
+}
+.opt-btn:hover::before { width: 100%; }
+.opt-btn:hover { border-color: var(--border-mid); color: var(--text-white); }
+.opt-btn.selected { border-color: var(--cyan); color: var(--text-white); background: var(--cyan-soft); }
+.opt-btn.selected .opt-letter { background: var(--cyan); color: var(--bg-deep); border-color: var(--cyan); }
+.opt-letter {
+  width: 30px; height: 30px; flex-shrink: 0;
+  border: 1px solid var(--border); background: var(--bg-card);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
+  transition: var(--trans); position: relative; z-index: 1;
+}
+.opt-text { position: relative; z-index: 1; }
+
+/* Exam nav */
+.exam-nav { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.exam-nav .btn-ghost { padding: 12px 22px; font-size: 0.82rem; }
+.btn-submit-exam {
+  margin-left: auto;
+  background: transparent; border: 1px solid var(--green);
+  color: var(--green); font-family: var(--font-head);
+  font-weight: 600; font-size: 0.9rem; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 12px 28px; cursor: pointer;
+  transition: var(--trans); display: flex; align-items: center; gap: 8px;
+}
+.btn-submit-exam:hover { background: var(--green); color: var(--bg-deep); box-shadow: 0 0 24px rgba(0,229,160,0.25); }
+
+/* ============================================================
+   RESULT PAGE
+   ============================================================ */
+.result-wrap { max-width: 700px; margin: 0 auto; padding: 40px 20px 60px; }
+.result-hero {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 48px 32px; text-align: center; margin-bottom: 20px;
+  position: relative; overflow: hidden;
+}
+.result-hero::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--blue-mid), var(--cyan), var(--green));
+}
+
+/* Score ring */
+.score-ring-wrap { position: relative; width: 160px; height: 160px; margin: 0 auto 24px; }
+.score-ring-svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.score-ring-bg { fill: none; stroke: var(--bg-raised); stroke-width: 8; }
+.score-ring-fill { fill: none; stroke: var(--cyan); stroke-width: 8; stroke-linecap: square; transition: stroke-dashoffset 1s ease; }
+.score-ring-fill.pass { stroke: var(--cyan); }
+.score-ring-fill.fail { stroke: var(--red); }
+.score-center {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.score-num { font-family: var(--font-head); font-size: 2.8rem; font-weight: 700; color: var(--text-white); line-height: 1; }
+.score-lbl { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); letter-spacing: 0.15em; text-transform: uppercase; }
+
+.result-status {
+  font-family: var(--font-head); font-size: 1.4rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px;
+}
+.result-status.pass { color: var(--green); }
+.result-status.fail { color: var(--red); }
+.result-msg { font-size: 0.88rem; color: var(--text-light); }
+
+/* Success particles */
+.success-fx {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+}
+.fx-particle {
+  position: absolute; width: 4px; height: 4px; background: var(--cyan);
+  animation: fxRise 2s ease-in-out infinite;
+}
+@keyframes fxRise {
+  0% { transform: translateY(100%) scale(0); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(-100%) scale(1); opacity: 0; }
+}
+
+.result-table {
+  background: var(--bg-card); border: 1px solid var(--border); margin-bottom: 20px;
+}
+.result-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+.result-row:last-child { border-bottom: none; }
+.r-key { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.r-val { color: var(--text-white); font-weight: 600; }
+.r-val.cyan { color: var(--cyan); }
+.r-val.green { color: var(--green); }
+.r-val.red { color: var(--red); }
+
+.result-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+.fail-box {
+  background: var(--red-dim); border: 1px solid var(--red);
+  padding: 16px 20px; margin-top: 16px;
+  font-size: 0.88rem; color: var(--red);
+  font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.05em;
+  display: none;
+}
+
+/* ============================================================
+   CERTIFICATE PAGE
+   ============================================================ */
+#page-sertifikat { background: var(--bg-deep); }
+.cert-page-wrap { padding: 40px 20px 80px; text-align: center; }
+.cert-preview-outer {
+  display: inline-block;
+  border: 1px solid var(--border-mid);
+  background: var(--bg-card);
+  padding: 24px; margin-bottom: 32px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  max-width: 100%; overflow: hidden;
+}
+.cert-preview-scale {
+  transform-origin: top left;
+  transform: scale(0.65);
+  width: 1122px; height: 794px;
+}
+@media (max-width: 900px) { .cert-preview-scale { transform: scale(0.32); } .cert-preview-outer { padding: 12px; } }
+@media (max-width: 500px) { .cert-preview-scale { transform: scale(0.24); } }
+
+/* ============================================================
+   CERTIFICATE DESIGN (for PDF render & preview)
+   ============================================================ */
+.certificate-doc {
+  width: 1122px; height: 794px;
+  background: #1E76BE;
+  position: relative; overflow: hidden;
+  font-family: 'Rajdhani', sans-serif;
+  color: white;
+}
+/* Main border frame */
+.cert-frame-outer {
+  position: absolute; inset: 14px;
+  border: 1px solid rgba(0,229,255,0.25);
+}
+.cert-frame-inner {
+  position: absolute; inset: 20px;
+  border: 1px solid rgba(0,229,255,0.10);
+}
+
+/* Background grid */
+.cert-bg-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Glow orbs */
+.cert-orb-tl {
+  position: absolute; top: -80px; left: -80px;
+  width: 400px; height: 400px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,100,200,0.15) 0%, transparent 70%);
+}
+.cert-orb-br {
+  position: absolute; bottom: -80px; right: -80px;
+  width: 350px; height: 350px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,229,255,0.08) 0%, transparent 70%);
+}
+
+/* Diagonal accent line */
+.cert-diag {
+  position: absolute; top: 0; right: 260px; bottom: 0; width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(0,229,255,0.2), transparent);
+}
+
+/* Left panel */
+.cert-left {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 260px;
+  background: linear-gradient(180deg, #051829 0%, #071226 100%);
+  border-right: 1px solid rgba(0,229,255,0.15);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 40px 24px; justify-content: space-between;
+}
+.cert-logo-baksos {
+  width: 90px; height: 90px; object-fit: contain;
+}
+.cert-left-title {
+  writing-mode: vertical-rl; text-orientation: mixed;
+  transform: rotate(180deg);
+  font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.3em; color: rgba(0,229,255,0.4);
+  text-transform: uppercase;
+}
+.cert-left-verified {
+  text-align: center; padding: 12px;
+  border: 1px solid rgba(0,229,255,0.2); background: rgba(0,229,255,0.04);
+}
+.cert-left-verified .v-label { font-size: 9px; letter-spacing: 0.25em; color: rgba(0,229,255,0.5); display: block; margin-bottom: 6px; text-transform: uppercase; }
+.cert-left-verified .v-badge { font-size: 13px; font-weight: 700; color: #00E5FF; letter-spacing: 0.1em; display: block; }
+
+/* Right main */
+.cert-main {
+  position: absolute; left: 260px; top: 0; right: 0; bottom: 0;
+  padding: 44px 52px 36px 48px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+
+/* Top: logo multimedia + cert label */
+.cert-top-row {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.cert-logo-multimedia {
+  height: 32px; max-width: 260px; object-fit: contain; object-position: left;
+  filter: brightness(0.9);
+}
+.cert-id-tag {
+  font-family: 'Share Tech Mono', monospace; font-size: 10px;
+  color: rgba(0,229,255,0.4); letter-spacing: 0.15em; text-align: right;
+}
+
+/* Cert title block */
+.cert-title-block { margin-top: 16px; }
+.cert-presented { font-size: 11px; letter-spacing: 0.3em; color: rgba(255,255,255,0.35); text-transform: uppercase; margin-bottom: 4px; }
+.cert-main-title {
+  font-family: 'Rajdhani', sans-serif; font-size: 46px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; line-height: 1;
+  color: white;
+}
+.cert-main-subtitle {
+  font-size: 14px; letter-spacing: 0.25em; color: rgba(0,229,255,0.7);
+  text-transform: uppercase; margin-top: 4px;
+}
+.cert-divider-line {
+  width: 100%; height: 1px; margin: 16px 0;
+  background: linear-gradient(90deg, rgba(0,229,255,0.5), rgba(0,229,255,0.1), transparent);
+}
+
+/* Name section */
+.cert-name-label { font-size: 11px; letter-spacing: 0.25em; color: rgba(255,255,255,0.35); text-transform: uppercase; margin-bottom: 4px; }
+.cert-name { font-family: 'Rajdhani', sans-serif; font-size: 36px; font-weight: 700; letter-spacing: 0.06em; color: #00E5FF; line-height: 1.1; }
+.cert-name-underline { width: 320px; height: 1px; background: linear-gradient(90deg, #00E5FF, transparent); margin: 6px 0 10px; }
+
+/* Desc */
+.cert-desc { font-size: 12px; color: rgba(255,255,255,0.45); line-height: 1.6; max-width: 580px; }
+.cert-desc strong { color: rgba(255,255,255,0.65); }
+
+/* Score chip */
+.cert-score-chip {
+  display: inline-flex; align-items: center; gap: 12px;
+  border: 1px solid rgba(0,229,255,0.3); background: rgba(0,229,255,0.05);
+  padding: 8px 20px; margin: 10px 0;
+}
+.cert-score-num { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; color: #00E5FF; line-height: 1; }
+.cert-score-info { text-align: left; }
+.cert-score-info .s1 { font-size: 9px; color: rgba(255,255,255,0.35); letter-spacing: 0.2em; text-transform: uppercase; display: block; }
+.cert-score-info .s2 { font-size: 12px; color: rgba(0,229,255,0.7); font-weight: 600; letter-spacing: 0.1em; display: block; }
+
+/* Bottom row: date + signature */
+.cert-bottom-row {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  border-top: 1px solid rgba(0,229,255,0.1); padding-top: 16px;
+}
+.cert-date-block .db-label { font-size: 9px; letter-spacing: 0.2em; color: rgba(255,255,255,0.3); text-transform: uppercase; display: block; margin-bottom: 4px; }
+.cert-date-block .db-val { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: rgba(255,255,255,0.65); }
+
+.cert-sig-block { text-align: center; min-width: 180px; }
+.cert-sig-img { max-height: 52px; max-width: 180px; object-fit: contain; display: block; margin: 0 auto 6px; }
+.cert-sig-line { width: 180px; height: 1px; background: rgba(0,229,255,0.25); margin: 0 auto 6px; }
+.cert-sig-name { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.8); letter-spacing: 0.08em; }
+.cert-sig-role { font-size: 10px; color: rgba(0,229,255,0.5); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 2px; }
+
+/* Corner tech decorations */
+.cert-corner {
+  position: absolute; width: 28px; height: 28px;
+}
+.cert-corner.tl { top: 24px; left: 274px; border-top: 2px solid rgba(0,229,255,0.5); border-left: 2px solid rgba(0,229,255,0.5); }
+.cert-corner.tr { top: 24px; right: 24px; border-top: 2px solid rgba(0,229,255,0.5); border-right: 2px solid rgba(0,229,255,0.5); }
+.cert-corner.bl { bottom: 24px; left: 274px; border-bottom: 2px solid rgba(0,229,255,0.5); border-left: 2px solid rgba(0,229,255,0.5); }
+.cert-corner.br { bottom: 24px; right: 24px; border-bottom: 2px solid rgba(0,229,255,0.5); border-right: 2px solid rgba(0,229,255,0.5); }
+
+/* Dot grid pattern (decorative) */
+.cert-dot-pattern {
+  position: absolute; right: 30px; top: 120px;
+  display: grid; grid-template-columns: repeat(8,1fr); gap: 8px; opacity: 0.15;
+}
+.cert-dot-pattern span { display: block; width: 3px; height: 3px; background: #00E5FF; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+  .navbar-nav { display: none; }
+  .hamburger { display: flex; }
+  .hero-stats { border: none; flex-direction: column; gap: 1px; }
+  .stat-item { border-right: none; border-bottom: 1px solid var(--border); flex: none; width: 100%; display: flex; align-items: center; gap: 16px; text-align: left; }
+  .stat-icon { margin: 0; }
+  .stat-val { font-size: 1.2rem; }
+  .hero-logos { gap: 20px; }
+  .logo-multimedia { height: 32px; max-width: 220px; }
+  .logo-baksos { height: 60px; width: 60px; }
+  .material-grid { grid-template-columns: 1fr; padding: 16px 14px 50px; }
+  .name-gate { padding: 40px 20px; }
+  .result-hero { padding: 32px 20px; }
+  .cert-preview-outer { padding: 8px; }
+}
+@media (max-width: 480px) {
+  .hero-actions { flex-direction: column; align-items: center; }
+  .btn-primary, .btn-gold { width: 100%; max-width: 300px; justify-content: center; }
+  .exam-hdr { flex-direction: column; align-items: flex-start; }
+  .exam-nav { flex-direction: column; }
+  .btn-submit-exam { margin-left: 0; width: 100%; justify-content: center; }
+  .result-actions { flex-direction: column; align-items: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- PARTICLE CANVAS -->
+<canvas id="particleCanvas"></canvas>
+
+<!-- LOADING SCREEN -->
+<div id="loadingScreen">
+  <div class="loader-ring"></div>
+  <div class="loader-text">Memuat Platform</div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+</div>
+
+<!-- PROCESSING OVERLAY -->
+<div id="processingOverlay">
+  <div class="loader-ring"></div>
+  <div class="processing-text" id="processingText">Memproses...</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MOBILE SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <button class="sidebar-close" onclick="closeSidebar()">&#x2715;</button>
+  <div class="sidebar-logo">
+    <img src="https://files.catbox.moe/azvw2f.png" alt="Logo Multimedia" style="height:30px;object-fit:contain;" onerror="this.style.display='none'"/>
+  </div>
+  <div class="sidebar-nav">
+    <button class="sidebar-btn active" onclick="showPage('home');closeSidebar()">
+      <img src="https://img.icons8.com/ios-filled/50/home.png" alt=""/> Beranda
+    </button>
+    <button class="sidebar-btn" onclick="showPage('materi');closeSidebar()">
+      <img src="https://img.icons8.com/ios-filled/50/book.png" alt=""/> Materi
+    </button>
+    <button class="sidebar-btn" onclick="showPage('ujian');closeSidebar()">
+      <img src="https://img.icons8.com/ios-filled/50/test.png" alt=""/> Ujian
+    </button>
+  </div>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <img src="https://files.catbox.moe/azvw2f.png" alt="Logo Multimedia" class="logo-multimedia" onerror="this.style.display='none'"/>
+  </div>
+  <div class="navbar-line"></div>
+  <div class="navbar-nav">
+    <button class="nav-btn active" id="navHome" onclick="showPage('home')">
+      <img src="https://img.icons8.com/ios-filled/50/ffffff/home.png" alt=""/>
+      <span>Beranda</span>
+    </button>
+    <button class="nav-btn" id="navMateri" onclick="showPage('materi')">
+      <img src="https://img.icons8.com/ios-filled/50/ffffff/book.png" alt=""/>
+      <span>Materi</span>
+    </button>
+    <button class="nav-btn" id="navUjian" onclick="showPage('ujian')">
+      <img src="https://img.icons8.com/ios-filled/50/ffffff/test.png" alt=""/>
+      <span>Ujian</span>
+    </button>
+  </div>
+  <button class="hamburger" onclick="openSidebar()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ==================== HOME ==================== -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+
+    <!-- Logos -->
+    <div class="hero-logos">
+      <img src="https://files.catbox.moe/mit17w.png" alt="Logo Bakti Sosial" class="logo-baksos"
+        onerror="this.style.display='none'"/>
+      <div class="logo-divider"></div>
+      <img src="https://files.catbox.moe/azvw2f.png" alt="Logo Multimedia" class="logo-multimedia"
+        style="height:48px;max-width:320px;"
+        onerror="this.style.display='none'"/>
+    </div>
+
+    <!-- Status chip -->
+    <div class="status-chip">
+      <div class="status-dot"></div>
+      <span>Platform Aktif — Tahun 2026</span>
+    </div>
+
+    <!-- Title -->
+    <h1 class="hero-title">
+      <span class="line1">Bakti Sosial</span>
+      <span class="line2">Edukasi Digital</span>
+    </h1>
+
+    <p class="hero-subtitle">
+      Kegiatan edukasi digital untuk meningkatkan kreativitas, etika internet, keamanan digital, dan tanggung jawab penggunaan teknologi bagi generasi muda Indonesia.
+    </p>
+
+    <div class="hero-theme">"Fokus pada Kreativitas dan Tanggung Jawab di Era Digital"</div>
+
+    <!-- Stats -->
+    <div class="hero-stats">
+      <div class="stat-item">
+        <img class="stat-icon" src="https://img.icons8.com/ios-filled/50/ffffff/book.png" alt=""/>
+        <div>
+          <span class="stat-val">10</span>
+          <div class="stat-label">Topik Materi</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <img class="stat-icon" src="https://img.icons8.com/ios-filled/50/ffffff/test.png" alt=""/>
+        <div>
+          <span class="stat-val">30</span>
+          <div class="stat-label">Soal Ujian</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <img class="stat-icon" src="https://img.icons8.com/ios-filled/50/ffffff/high-priority.png" alt=""/>
+        <div>
+          <span class="stat-val">&gt;70</span>
+          <div class="stat-label">Nilai Lulus</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <img class="stat-icon" src="https://img.icons8.com/ios-filled/50/ffffff/certificate.png" alt=""/>
+        <div>
+          <span class="stat-val">PDF</span>
+          <div class="stat-label">Sertifikat</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="showPage('materi')">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/book.png" alt="" style="width:18px;height:18px;filter:none;"/>
+        <span>Mulai Belajar</span>
+      </button>
+      <button class="btn-ghost" onclick="showPage('ujian')">
+        <span>Langsung Ujian</span>
+      </button>
+    </div>
+
+    <div class="organizer-badge">
+      Penyelenggara: <strong>MELQY ERTAWANNY</strong>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MATERI ==================== -->
+<div class="page" id="page-materi">
+  <div class="page-header">
+    <div class="section-wrap">
+      <div class="section-tag">Bahan Ajar</div>
+      <h2 class="section-title">Materi <span>Pembelajaran</span></h2>
+      <p class="section-sub">Klik setiap materi untuk membuka. Baca dengan teliti sebelum mengikuti ujian.</p>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="section-wrap" style="padding-top:24px;">
+    <div class="learning-progress">
+      <div class="lp-label">Progress Belajar</div>
+      <div class="lp-bar-wrap">
+        <div class="lp-bar" id="lpBar"></div>
+      </div>
+      <div class="lp-count" id="lpCount">0/10</div>
+      <div class="lp-pct" id="lpPct">0%</div>
+    </div>
+  </div>
+
+  <!-- Grid -->
+  <div class="material-grid" id="materialGrid"></div>
+</div>
+
+<!-- ==================== UJIAN ==================== -->
+<div class="page" id="page-ujian">
+  <div class="page-header">
+    <div class="section-wrap">
+      <div class="section-tag">Evaluasi</div>
+      <h2 class="section-title">Ujian <span>Online</span></h2>
+      <p class="section-sub">Selesaikan 30 soal pilihan ganda. Nilai lulus minimal 71.</p>
+    </div>
+  </div>
+
+  <!-- Name Gate -->
+  <div class="exam-wrap" id="nameGate">
+    <div class="name-gate">
+      <img class="name-gate-icon" src="https://img.icons8.com/ios-filled/100/ffffff/student-male.png" alt=""/>
+      <h3>Identifikasi Peserta</h3>
+      <p>Masukkan nama lengkap kamu sebelum memulai ujian.</p>
+      <div class="name-input-wrap">
+        <input class="name-input" type="text" id="nameInput" placeholder="Nama Lengkap..." maxlength="60"/>
+        <div class="exam-info-row">
+          <div class="exam-info-cell"><div class="eic-val">30</div><div class="eic-key">Soal</div></div>
+          <div class="exam-info-cell"><div class="eic-val">40'</div><div class="eic-key">Waktu</div></div>
+          <div class="exam-info-cell"><div class="eic-val">PG</div><div class="eic-key">Tipe Soal</div></div>
+          <div class="exam-info-cell"><div class="eic-val">&gt;70</div><div class="eic-key">Min. Lulus</div></div>
+        </div>
+        <button class="btn-primary" style="width:100%;justify-content:center;" onclick="startExam()">
+          <img src="https://img.icons8.com/ios-filled/50/ffffff/play.png" alt="" style="width:16px;height:16px;filter:none;"/>
+          <span>Mulai Ujian</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exam Box -->
+  <div class="exam-wrap" id="examBox" style="display:none;">
+    <!-- Header -->
+    <div class="exam-hdr">
+      <div class="exam-hdr-name">Peserta: <strong id="examName">—</strong></div>
+      <div class="exam-progress-text">Soal <strong id="qCurrent">1</strong> / 30</div>
+      <div class="timer" id="timerBox">
+        <img class="timer-icon" src="https://img.icons8.com/ios-filled/50/ffffff/clock.png" alt=""/>
+        <span id="timerDisp">40:00</span>
+      </div>
+    </div>
+    <!-- Progress -->
+    <div class="exam-prog-bar"><div class="exam-prog-fill" id="examProgFill"></div></div>
+    <!-- Q dots -->
+    <div class="q-dots-wrap" id="qDots"></div>
+    <!-- Question -->
+    <div class="q-card">
+      <div class="q-num-label" id="qNumLbl">Soal 1 dari 30</div>
+      <div class="q-text" id="qText"></div>
+      <div class="options-list" id="optsList"></div>
+    </div>
+    <!-- Nav -->
+    <div class="exam-nav">
+      <button class="btn-ghost" id="btnPrev" onclick="prevQ()">&#8592; Sebelumnya</button>
+      <button class="btn-ghost" id="btnNext" onclick="nextQ()">Selanjutnya &#8594;</button>
+      <button class="btn-submit-exam" id="btnSubmit" onclick="confirmSubmit()" style="display:none;">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/checkmark.png" alt="" style="width:14px;height:14px;filter:brightness(0) saturate(100%) invert(57%) sepia(67%) saturate(405%) hue-rotate(93deg) brightness(97%) contrast(95%);"/>
+        Kumpulkan Jawaban
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== RESULT ==================== -->
+<div class="page" id="page-result">
+  <div class="page-header">
+    <div class="section-wrap">
+      <div class="section-tag">Evaluasi Selesai</div>
+      <h2 class="section-title">Hasil <span>Ujian</span></h2>
+    </div>
+  </div>
+  <div class="result-wrap">
+    <div class="result-hero" id="resultHero">
+      <div class="success-fx" id="successFx"></div>
+      <!-- Score ring -->
+      <div class="score-ring-wrap">
+        <svg class="score-ring-svg" viewBox="0 0 160 160">
+          <circle class="score-ring-bg" cx="80" cy="80" r="68"/>
+          <circle class="score-ring-fill" id="scoreRingFill" cx="80" cy="80" r="68"
+            stroke-dasharray="427" stroke-dashoffset="427"/>
+        </svg>
+        <div class="score-center">
+          <div class="score-num" id="scoreNum">0</div>
+          <div class="score-lbl">Nilai</div>
+        </div>
+      </div>
+      <div class="result-status" id="resultStatus">—</div>
+      <div class="result-msg" id="resultMsg"></div>
+    </div>
+
+    <div class="result-table">
+      <div class="result-row"><span class="r-key">Nama Peserta</span><span class="r-val" id="rName">—</span></div>
+      <div class="result-row"><span class="r-key">Jawaban Benar</span><span class="r-val cyan" id="rCorrect">—</span></div>
+      <div class="result-row"><span class="r-key">Jawaban Salah</span><span class="r-val red" id="rWrong">—</span></div>
+      <div class="result-row"><span class="r-key">Nilai Akhir</span><span class="r-val cyan" id="rScore">—</span></div>
+      <div class="result-row"><span class="r-key">Status</span><span class="r-val" id="rStatus">—</span></div>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn-gold" id="btnCert" onclick="showPage('sertifikat')" style="display:none;">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/certificate.png" alt="" style="width:16px;height:16px;filter:none;"/>
+        <span>Lihat Sertifikat</span>
+      </button>
+      <button class="btn-ghost" onclick="resetAll()">Ulangi dari Awal</button>
+    </div>
+    <div class="fail-box" id="failBox">
+      NILAI TIDAK MEMENUHI SYARAT — Pelajari materi kembali dan coba lagi untuk mendapatkan sertifikat.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SERTIFIKAT ==================== -->
+<div class="page" id="page-sertifikat">
+  <div class="page-header">
+    <div class="section-wrap">
+      <div class="section-tag">Dokumen Resmi</div>
+      <h2 class="section-title">Sertifikat <span>Keikutsertaan</span></h2>
+      <p class="section-sub">Sertifikat resmi kegiatan Bakti Sosial Edukasi Digital.</p>
+    </div>
+  </div>
+  <div class="cert-page-wrap">
+    <div class="cert-preview-outer">
+      <div class="cert-preview-scale" id="certPreview"></div>
+    </div>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn-gold" onclick="downloadCert()">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/download.png" alt="" style="width:16px;height:16px;filter:none;"/>
+        <span>Download PDF</span>
+      </button>
+      <button class="btn-ghost" onclick="resetAll()">Kembali ke Beranda</button>
+    </div>
+  </div>
+</div>
+
+<!-- HIDDEN CERT for PDF render -->
+<div id="certHidden" style="position:fixed;left:-9999px;top:0;z-index:-1;"></div>
+
+<!-- ============================== JAVASCRIPT ============================== -->
+<script>
+// ============================
+// PARTICLE BACKGROUND
+// ============================
+(function() {
+  const canvas = document.getElementById('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  const W = () => canvas.width = window.innerWidth;
+  const H = () => canvas.height = window.innerHeight;
+  W(); H();
+  window.addEventListener('resize', () => { W(); H(); });
+
+  function createParticles() {
+    particles = [];
+    const count = Math.floor(window.innerWidth / 20);
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.5 + 0.3,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        alpha: Math.random() * 0.5 + 0.1,
+      });
+    }
+  }
+  createParticles();
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach((p, i) => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0,229,255,${p.alpha})`;
+      ctx.fill();
+      // Connect nearby particles
+      for (let j = i+1; j < particles.length; j++) {
+        const dx = particles[j].x - p.x, dy = particles[j].y - p.y;
+        const dist = Math.sqrt(dx*dx+dy*dy);
+        if (dist < 100) {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(0,229,255,${0.04*(1-dist/100)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ============================
+// LOADING SCREEN
+// ============================
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('loadingScreen').classList.add('hide');
+    setTimeout(() => document.getElementById('loadingScreen').remove(), 600);
+  }, 1800);
+});
+
+// ============================
+// SIDEBAR
+// ============================
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+
+// ============================
+// NAVIGATION
+// ============================
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  // Navbar active
+  document.querySelectorAll('.nav-btn,.sidebar-btn').forEach(b => b.classList.remove('active'));
+  const map = { home:'navHome', materi:'navMateri', ujian:'navUjian' };
+  if (map[id]) document.getElementById(map[id]).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================
+// TOAST
+// ============================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ============================
+// PROCESSING OVERLAY
+// ============================
+function showProcessing(show, text = 'Memproses...') {
+  const el = document.getElementById('processingOverlay');
+  document.getElementById('processingText').textContent = text;
+  el.classList.toggle('show', show);
+}
+
+// ============================
+// MATERIALS DATA
+// ============================
+const ICONS = {
+  internet: 'https://img.icons8.com/ios-filled/100/ffffff/internet.png',
+  gadget:   'https://img.icons8.com/ios-filled/100/ffffff/smartphone.png',
+  cyber:    'https://img.icons8.com/ios-filled/100/ffffff/no-bullying.png',
+  social:   'https://img.icons8.com/ios-filled/100/ffffff/communication.png',
+  creative: 'https://img.icons8.com/ios-filled/100/ffffff/idea.png',
+  password: 'https://img.icons8.com/ios-filled/100/ffffff/password.png',
+  hoax:     'https://img.icons8.com/ios-filled/100/ffffff/spam.png',
+  ai:       'https://img.icons8.com/ios-filled/100/ffffff/artificial-intelligence.png',
+  tanggung: 'https://img.icons8.com/ios-filled/100/ffffff/scales.png',
+  pelajar:  'https://img.icons8.com/ios-filled/100/ffffff/student-male.png',
+};
+
+const materials = [
+  {
+    id:1, icon: ICONS.internet, title: 'Apa itu Internet?',
+    desc: 'Internet adalah jaringan komputer raksasa yang menghubungkan jutaan perangkat di seluruh dunia. Bayangkan internet seperti jalan raya digital yang tidak ada batasnya. Melalui internet, kita dapat mengakses informasi, berkomunikasi, menonton video, dan berkolaborasi dengan siapa saja di mana saja.',
+    points: ['Jaringan global yang menghubungkan perangkat di seluruh dunia','Digunakan untuk mencari informasi, komunikasi, dan hiburan','Dapat diakses melalui HP, tablet, laptop, dan komputer','Memerlukan koneksi data atau WiFi untuk terhubung','Internet sudah ada sejak 1960-an dan terus berkembang pesat'],
+    example: { label: 'CONTOH SEHARI-HARI', text: 'Saat kamu mencari tugas di Google, menonton video di YouTube, atau mengirim pesan di WhatsApp — semuanya menggunakan internet.' },
+    quiz: { q: 'Apa fungsi utama internet?', opts:['Membuat listrik','Menghubungkan perangkat di seluruh dunia','Memasak makanan'], ans:1 }
+  },
+  {
+    id:2, icon: ICONS.gadget, title: 'Menggunakan Gadget dengan Bijak',
+    desc: 'Gadget seperti smartphone, tablet, dan laptop adalah alat yang sangat berguna. Namun penggunaan berlebihan dapat berdampak buruk bagi kesehatan fisik dan mental. Kuncinya: gunakan gadget sebagai alat belajar dan berkreasi, bukan sekadar hiburan.',
+    points: ['Batasi screen time hiburan maksimal 2 jam per hari','Terapkan aturan 20-20-20: setiap 20 menit istirahatkan mata 20 detik lihat jarak 20 kaki','Jangan gunakan HP saat makan bersama keluarga','Gunakan gadget untuk belajar, berkreasi, dan hal produktif','Selalu minta izin orang tua sebelum mengunduh aplikasi baru'],
+    example: { label: 'KEBIASAAN DIGITAL SEHAT', text: 'Budi menggunakan HP untuk belajar di Khan Academy selama 1 jam, lalu beristirahat dan bermain di luar. Itulah penggunaan gadget yang cerdas dan sehat.' },
+    quiz: { q: 'Berapa lama maksimal screen time hiburan yang dianjurkan per hari?', opts:['8 jam','5 jam','2 jam'], ans:2 }
+  },
+  {
+    id:3, icon: ICONS.cyber, title: 'Bahaya Cyberbullying',
+    desc: 'Cyberbullying adalah tindakan perundungan yang terjadi di dunia digital melalui pesan, media sosial, atau platform online lainnya. Ini merupakan masalah serius yang dapat mengakibatkan dampak psikologis berat bagi korbannya.',
+    points: ['Cyberbullying meliputi penghinaan, ancaman, atau mempermalukan seseorang secara online','Dapat terjadi di WhatsApp, Instagram, TikTok, game online, dan platform lain','Dampaknya: korban dapat mengalami stres, depresi, dan trauma','Jangan membalas — simpan bukti (screenshot) dan laporkan','Ceritakan kepada orang tua, guru, atau pihak berwenang jika mengalaminya'],
+    example: { label: 'TINDAKAN YANG TEPAT', text: 'Sari menerima komentar jahat di media sosial. Ia tidak membalas, memblokir akun tersebut, menyimpan screenshot sebagai bukti, dan segera melapor kepada orang tuanya.' },
+    quiz: { q: 'Tindakan yang TEPAT saat mengalami cyberbullying adalah?', opts:['Membalas dengan kata kasar','Diam saja selamanya','Simpan bukti dan ceritakan ke orang tua atau guru'], ans:2 }
+  },
+  {
+    id:4, icon: ICONS.social, title: 'Etika Bermedia Sosial',
+    desc: 'Media sosial adalah ruang publik digital tempat kita berbagi dan berkomunikasi. Sama seperti kehidupan nyata, ada norma dan etika yang harus dijaga. Ingat: apapun yang diposting di internet dapat dilihat banyak orang dan sangat sulit dihapus sepenuhnya.',
+    points: ['Gunakan bahasa yang sopan dan tidak menyinggung perasaan orang lain','Jangan bagikan informasi pribadi seperti alamat, nomor HP, atau nama sekolah','Minta izin sebelum mengunggah foto atau video orang lain','Pikirkan dampak sebelum memposting sesuatu','Blokir dan laporkan akun yang mencurigakan atau tidak sopan'],
+    example: { label: 'PRINSIP THINK', text: 'Sebelum posting, tanyakan: apakah ini True (benar)? Helpful (bermanfaat)? Inspiring (inspiratif)? Necessary (perlu)? Kind (baik hati)? Kalau tidak, lebih baik tidak diposting.' },
+    quiz: { q: 'THINK dalam etika media sosial singkatan dari?', opts:['True, Helpful, Inspiring, Necessary, Kind','Top, High, Important, New, Key','Talk, Hear, Influence, Note, Keep'], ans:0 }
+  },
+  {
+    id:5, icon: ICONS.creative, title: 'Menjadi Kreatif di Era Digital',
+    desc: 'Era digital membuka peluang kreativitas yang tidak terbatas. Dengan teknologi yang tepat, siapa pun dapat menjadi kreator konten, desainer, programmer, atau musisi digital. Manfaatkan tools digital untuk mengembangkan bakat dan ide-idemu!',
+    points: ['Gunakan Canva, Adobe Express untuk desain grafis digital','Buat video edukatif atau kreatif dan bagikan secara positif','Tulis blog atau cerita di platform yang aman','Pelajari coding dasar melalui Scratch, Code.org, atau Khan Academy','Ikuti kelas online gratis untuk mengembangkan skill digital'],
+    example: { label: 'KREATOR DIGITAL MUDA', text: 'Dina membuat poster digital tentang lingkungan hidup menggunakan Canva, lalu diunggah ke media sosial sekolah. Hasilnya banyak teman yang terinspirasi untuk menjaga lingkungan.' },
+    quiz: { q: 'Platform yang cocok untuk belajar coding dasar secara menyenangkan adalah?', opts:['WhatsApp','TikTok','Scratch atau Code.org'], ans:2 }
+  },
+  {
+    id:6, icon: ICONS.password, title: 'Keamanan Password',
+    desc: 'Password adalah kunci keamanan akun digitalmu. Password yang lemah dapat dengan mudah ditebak atau diretas oleh pihak tidak bertanggung jawab. Lindungi semua akunmu dengan password yang kuat dan unik.',
+    points: ['Password kuat: minimal 8 karakter, kombinasi huruf besar-kecil, angka, dan simbol','Jangan gunakan nama, tanggal lahir, atau informasi yang mudah ditebak','Gunakan password berbeda untuk setiap akun penting','Jangan pernah membagikan password kepada siapapun termasuk teman dekat','Aktifkan autentikasi dua langkah (2FA) di semua akun penting'],
+    example: { label: 'PERBANDINGAN PASSWORD', text: 'LEMAH: "123456" atau "namaku2025". KUAT: "Belajar@Digital2025!" — sulit ditebak namun mudah diingat oleh dirimu sendiri.' },
+    quiz: { q: 'Mana yang merupakan contoh password KUAT?', opts:['123456','namaku','Belajar@Digital2025!'], ans:2 }
+  },
+  {
+    id:7, icon: ICONS.hoax, title: 'Hoax dan Fake News',
+    desc: 'Hoax adalah informasi palsu yang sengaja dibuat dan disebarkan untuk menipu atau menyesatkan orang. Di era media sosial, hoax menyebar dengan sangat cepat. Jadilah konsumen informasi yang cerdas dengan selalu memverifikasi sebelum mempercayai.',
+    points: ['Ciri hoax: judul sensasional, sumber tidak jelas, memicu kepanikan berlebihan','Cek kebenaran di Turnbackhoax.id, Cekfakta.com, atau situs resmi pemerintah','Jangan langsung percaya informasi yang diterima via grup WhatsApp','Perhatikan tanggal berita — mungkin berita lama yang disebarkan kembali','Prinsip STOP: Stop, Think, Observe, Plan sebelum membagikan informasi'],
+    example: { label: 'CONTOH HOAX BERBAHAYA', text: 'Pesan berantai: "Minum air hangat setiap jam dapat menyembuhkan semua penyakit!" — Ini hoax berbahaya. Selalu cek ke sumber medis resmi seperti situs Kemenkes RI.' },
+    quiz: { q: 'Langkah yang tepat sebelum membagikan informasi dari internet adalah?', opts:['Langsung bagikan agar cepat menyebar','Cek kebenarannya di sumber terpercaya terlebih dahulu','Bagikan hanya ke keluarga saja'], ans:1 }
+  },
+  {
+    id:8, icon: ICONS.ai, title: 'Menggunakan AI dengan Benar',
+    desc: 'Kecerdasan Buatan (Artificial Intelligence/AI) adalah teknologi canggih yang mampu membantu kita belajar, menulis, dan berkreasi. Namun AI hanyalah alat — kita harus tetap berpikir kritis, kreatif, dan bertanggung jawab atas penggunaannya.',
+    points: ['AI dapat membantu: merangkum teks, menjawab pertanyaan, membuat gambar dan kode','Jangan gunakan AI untuk mencontek, berbohong, atau melakukan kecurangan akademik','Selalu verifikasi jawaban AI karena AI dapat membuat kesalahan (halusinasi)','AI tidak dapat menggantikan kreativitas, empati, dan kearifan manusia','Gunakan AI sebagai asisten belajar, bukan pengganti proses belajar'],
+    example: { label: 'PENGGUNAAN AI YANG ETIS', text: 'Andi meminta AI untuk menjelaskan konsep fotosintesis dengan cara yang mudah dipahami, lalu mencatat poin-poin penting menggunakan kata-katanya sendiri. Itulah cara memanfaatkan AI secara jujur dan cerdas.' },
+    quiz: { q: 'Cara yang benar menggunakan AI dalam belajar adalah?', opts:['Salin semua jawaban AI untuk tugas sekolah tanpa diedit','Gunakan AI sebagai asisten belajar dan tetap berpikir kritis','Gunakan AI untuk menjawab soal ujian tanpa belajar'], ans:1 }
+  },
+  {
+    id:9, icon: ICONS.tanggung, title: 'Tanggung Jawab Digital',
+    desc: 'Menjadi warga digital yang baik berarti bertanggung jawab penuh atas setiap tindakan yang dilakukan di dunia maya. Setiap konten yang dibuat, setiap komentar yang ditulis, dan setiap informasi yang dibagikan memiliki dampak nyata di dunia.',
+    points: ['Hormati privasi dan hak-hak orang lain di dunia digital','Jangan melakukan plagiarisme — gunakan karya orang lain dengan izin dan cantumkan sumber','Tidak membuat atau menyebarkan konten yang menyakiti atau merugikan orang lain','Bertanggung jawab penuh atas akun dan identitas digitalmu','Patuhi hukum, aturan platform, dan etika yang berlaku'],
+    example: { label: 'CONTOH TANGGUNG JAWAB DIGITAL', text: 'Raka menemukan foto temannya di internet dan ingin menggunakannya untuk poster. Ia terlebih dahulu meminta izin kepada sang pemilik foto sebelum menggunakannya. Itulah bentuk tanggung jawab digital.' },
+    quiz: { q: 'Apa yang dimaksud tanggung jawab digital?', opts:['Bebas melakukan apa saja di internet','Bertanggung jawab atas setiap tindakan dan konten di dunia digital','Hanya menggunakan internet untuk hiburan'], ans:1 }
+  },
+  {
+    id:10, icon: ICONS.pelajar, title: 'Menjadi Pelajar Digital yang Baik',
+    desc: 'Generasi digital yang baik adalah mereka yang mampu memanfaatkan teknologi secara bijak, kreatif, dan bertanggung jawab. Jadilah agen perubahan positif di era digital — bukan sekadar konsumen, tetapi juga kreator yang memberi manfaat bagi masyarakat.',
+    points: ['Gunakan internet dan teknologi untuk terus belajar dan mengembangkan diri','Jadilah teladan digital yang positif dan inspiratif bagi teman-teman','Bergabunglah dengan komunitas belajar online yang positif dan produktif','Bagikan konten yang menginspirasi, informatif, dan bermanfaat','Terus belajar, eksplorasi, dan jangan takut mencoba teknologi baru'],
+    example: { label: 'KISAH INSPIRATIF', text: 'Maya membuat channel YouTube berisi tutorial sains sederhana untuk anak-anak. Dalam 6 bulan, videonya ditonton ribuan orang dan banyak anak yang terbantu dalam belajar. Itulah dampak positif dari teknologi digital.' },
+    quiz: { q: 'Ciri utama pelajar digital yang baik adalah?', opts:['Menghabiskan waktu bermain game seharian','Punya followers terbanyak di media sosial','Memanfaatkan teknologi untuk hal positif dan terus berkembang'], ans:2 }
+  },
+];
+
+let readTopics = new Set();
+
+function renderMaterials() {
+  const grid = document.getElementById('materialGrid');
+  grid.innerHTML = '';
+  materials.forEach((m, idx) => {
+    const isRead = readTopics.has(m.id);
+    const card = document.createElement('div');
+    card.className = 'mat-card';
+    card.id = 'matCard' + idx;
+    card.innerHTML = `
+      <div class="mat-head" onclick="toggleMat(${idx})">
+        <div class="mat-icon-wrap">
+          <img src="${m.icon}" alt="" onerror="this.style.display='none'"/>
+        </div>
+        <div class="mat-info">
+          <div class="mat-num">MODUL ${String(m.id).padStart(2,'0')}${isRead ? '<span class="mat-read-badge">SELESAI</span>':''}</div>
+          <div class="mat-title">${m.title}</div>
+        </div>
+        <div class="mat-chevron">&#9660;</div>
+      </div>
+      <div class="mat-body" id="matBody${idx}">
+        <div class="mat-body-inner">
+          <p class="mat-desc">${m.desc}</p>
+          <ul class="mat-points">${m.points.map(p=>`<li>${p}</li>`).join('')}</ul>
+          <div class="mat-example">
+            <strong>${m.example.label}</strong>${m.example.text}
+          </div>
+          <div class="mini-quiz" id="mq${idx}">
+            <div class="mq-label">Mini Quiz</div>
+            <div class="mq-q">${m.quiz.q}</div>
+            <div class="mq-opts">
+              ${m.quiz.opts.map((o,oi)=>`<button class="mq-opt" onclick="checkMQ(${idx},${oi})"><span class="mq-opt-letter">${String.fromCharCode(65+oi)}</span>${o}</button>`).join('')}
+            </div>
+            <div class="mq-feedback" id="mqFb${idx}"></div>
+          </div>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function toggleMat(idx) {
+  const body = document.getElementById('matBody' + idx);
+  const card = document.getElementById('matCard' + idx);
+  const isOpen = body.classList.contains('open');
+  document.querySelectorAll('.mat-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.mat-card').forEach(c => c.classList.remove('open'));
+  if (!isOpen) {
+    body.classList.add('open');
+    card.classList.add('open');
+    if (!readTopics.has(materials[idx].id)) {
+      readTopics.add(materials[idx].id);
+      updateProgress();
+    }
+  }
+}
+
+function updateProgress() {
+  const count = readTopics.size;
+  const pct = Math.round((count / 10) * 100);
+  document.getElementById('lpBar').style.width = pct + '%';
+  document.getElementById('lpCount').textContent = `${count}/10`;
+  document.getElementById('lpPct').textContent = `${pct}%`;
+  renderMaterials();
+}
+
+function checkMQ(matIdx, optIdx) {
+  const m = materials[matIdx];
+  const opts = document.querySelectorAll(`#mq${matIdx} .mq-opt`);
+  const fb = document.getElementById('mqFb' + matIdx);
+  opts.forEach((o, i) => {
+    o.disabled = true;
+    if (i === m.quiz.ans) o.classList.add('correct');
+    else if (i === optIdx && i !== m.quiz.ans) o.classList.add('wrong');
+  });
+  fb.textContent = optIdx === m.quiz.ans
+    ? 'BENAR — Jawaban kamu tepat!'
+    : `KURANG TEPAT — Jawaban yang benar: ${String.fromCharCode(65+m.quiz.ans)}`;
+  fb.style.color = optIdx === m.quiz.ans ? 'var(--green)' : 'var(--red)';
+}
+
+// ============================
+// EXAM QUESTIONS
+// ============================
+const questions = [
+  {q:'Apa yang dimaksud dengan internet?', opts:['Jaringan komputer global yang menghubungkan perangkat di seluruh dunia','Program belajar di sekolah','Televisi berwarna'], ans:0},
+  {q:'Contoh penggunaan internet dalam kehidupan sehari-hari adalah...', opts:['Memasak nasi di dapur','Mencari informasi tugas di Google','Bermain bola di lapangan'], ans:1},
+  {q:'Berapa lama waktu screen time hiburan yang dianjurkan per hari untuk anak?', opts:['10 jam per hari','6 jam per hari','2 jam per hari'], ans:2},
+  {q:'Aturan 20-20-20 dalam penggunaan gadget berarti...', opts:['Main gadget 20 jam per hari','Setiap 20 menit, lihat objek sejauh 20 kaki selama 20 detik','Istirahat 20 menit setiap 20 jam'], ans:1},
+  {q:'Apa itu cyberbullying?', opts:['Belajar komputer di sekolah','Bermain game bersama teman online','Perundungan yang dilakukan melalui media digital atau internet'], ans:2},
+  {q:'Jika mengalami cyberbullying, tindakan yang paling tepat adalah...', opts:['Membalas dengan kata-kata kasar','Simpan bukti dan ceritakan kepada orang tua atau guru','Diam dan tidak melakukan apa-apa'], ans:1},
+  {q:'THINK dalam etika bermedia sosial merupakan singkatan dari...', opts:['True, Helpful, Inspiring, Necessary, Kind','Top, High, Important, New, Key','Talk, Hear, Influence, Note, Keep'], ans:0},
+  {q:'Informasi yang TIDAK boleh dibagikan di media sosial adalah...', opts:['Foto pemandangan alam indah','Karya seni buatan sendiri','Alamat rumah dan nomor HP pribadi'], ans:2},
+  {q:'Aplikasi berikut yang tepat digunakan untuk belajar desain grafis digital adalah...', opts:['Canva atau Adobe Express','Kalkulator','Kompas navigasi'], ans:0},
+  {q:'Platform yang cocok untuk belajar coding dasar secara menyenangkan adalah...', opts:['TikTok','Instagram','Scratch atau Code.org'], ans:2},
+  {q:'Jus jus apa yang ga enak?...', opts:['Jus Mangga','Jus Alpukat','just friend :('], ans:2},
+  {q:'Hal yang TIDAK boleh dilakukan terhadap password akun kamu adalah...', opts:['Mengaktifkan autentikasi 2 langkah','Membuat password yang kuat dan unik','Membagikan password kepada teman'], ans:2},
+  {q:'Apa yang dimaksud dengan hoax?', opts:['Informasi benar dari sumber terpercaya','Berita resmi dari pemerintah','Informasi palsu yang dibuat untuk menipu orang'], ans:2},
+  {q:'Cara yang tepat untuk mengecek kebenaran sebuah informasi adalah...', opts:['Langsung disebarkan agar cepat viral','Percaya saja karena sudah banyak yang menyebarkan','Cari di sumber terpercaya seperti Cekfakta.com atau Turnbackhoax.id'], ans:2},
+  {q:'Kecerdasan Buatan (AI) sebaiknya digunakan untuk...', opts:['Mencontek saat ujian berlangsung','Membantu memahami pelajaran dan sebagai asisten belajar','Menyalin tugas sekolah sepenuhnya tanpa dipahami'], ans:1},
+  {q:'Yang harus dilakukan setelah mendapatkan jawaban dari AI adalah...', opts:['Langsung dikirim ke guru tanpa diperiksa','Memeriksa dan memverifikasi kebenarannya terlebih dahulu','Membagikan ke semua teman tanpa cek'], ans:1},
+  {q:'Tanggung jawab digital artinya...', opts:['Bebas melakukan apapun di internet tanpa aturan','Bertanggung jawab atas setiap tindakan dan konten yang dibuat di dunia digital','Hanya menggunakan internet untuk hiburan saja'], ans:1},
+  {q:'Jika ingin menggunakan foto orang lain untuk keperluan tertentu, kamu harus...', opts:['Langsung mengambil dan menggunakannya','Mengganti nama file foto tersebut','Meminta izin kepada pemilik foto terlebih dahulu'], ans:2},
+  {q:'Pelajar digital yang baik adalah...', opts:['Yang memiliki gadget paling banyak','Yang menggunakan teknologi untuk hal positif dan terus belajar','Yang punya followers terbanyak di media sosial'], ans:1},
+  {q:'Konten yang baik dan tepat untuk dibagikan di media sosial adalah...', opts:['Berita yang belum diverifikasi kebenarannya','Foto pribadi orang lain tanpa izin','Konten yang menginspirasi, informatif, dan bermanfaat bagi orang lain'], ans:2},
+  {q:'Apa manfaat utama internet bagi pelajar?', opts:['Hanya untuk hiburan dan bermain game saja','Mempermudah akses informasi dan sumber belajar yang luas','Membuat mata menjadi lebih sehat dari layar'], ans:1},
+  {q:'Ciri-ciri informasi hoax biasanya adalah...', opts:['Berasal dari sumber resmi dan terpercaya','Ditulis dengan bahasa yang santun dan objektif','Judul sensasional, sumber tidak jelas, dan memicu kepanikan'], ans:2},
+  {q:'Apa yang dimaksud dengan plagiarisme digital?', opts:['Membuat karya orisinal secara mandiri','Berbagi karya sendiri kepada orang banyak','Menggunakan karya orang lain tanpa izin dan diakui sebagai milik sendiri'], ans:2},
+  {q:'Etika bermedia sosial yang benar adalah...', opts:['Memposting apapun tanpa batas dan pertimbangan','Membagikan informasi pribadi orang lain secara bebas','Menggunakan bahasa sopan dan menghormati privasi orang lain'], ans:2},
+  {q:'Tujuan utama keamanan digital (cybersecurity) adalah...', opts:['Membuat koneksi internet menjadi lebih lambat','Membatasi penggunaan internet secara ketat','Melindungi data dan privasi pengguna dari ancaman digital'], ans:2},
+  {q:'Jika ada orang asing di internet yang meminta foto atau data pribadimu, kamu harus...', opts:['Memberikannya karena terlihat ramah','Memberikan sedikit informasi saja','Menolak dan segera memberitahu orang tua atau guru'], ans:2},
+  {q:'Autentikasi dua langkah (2FA) berguna untuk...', opts:['Menambahkan lapisan keamanan ekstra pada akun digitalmu','Membuat proses login menjadi lebih lambat','Membuat HP menjadi lebih berat'], ans:0},
+  {q:'Media sosial yang digunakan secara positif dapat...', opts:['Mengisolasi diri dari kehidupan dunia nyata','Membuat semua interaksi sosial menjadi tidak autentik','Menyebarkan inspirasi dan membangun komunitas yang positif'], ans:2},
+  {q:'Cara terbaik menjadi kreator konten yang bertanggung jawab adalah...', opts:['Membuat konten tanpa memikirkan dampaknya sama sekali','Hanya membuat konten yang viral meskipun tidak akurat','Membuat konten informatif, jujur, dan inspiratif dengan memperhatikan hak cipta'], ans:2},
+  {q:'Kemampuan paling penting yang harus dimiliki pelajar di era digital adalah...', opts:['Kemampuan mengetik dengan sangat cepat','Memiliki banyak perangkat gadget terbaru','Literasi digital: mampu memahami, menggunakan, dan mengevaluasi informasi digital secara kritis'], ans:2},
+];
+
+// ============================
+// EXAM STATE
+// ============================
+let userName='', finalScore=0, currentQ=0, answers={}, timerInterval=null, timeLeft=2400;
+
+function startExam() {
+  const name = document.getElementById('nameInput').value.trim();
+  if (!name) { showToast('Masukkan nama lengkap kamu terlebih dahulu.'); return; }
+  userName = name; answers = {}; currentQ = 0; timeLeft = 2400;
+  document.getElementById('nameGate').style.display = 'none';
+  document.getElementById('examBox').style.display = 'block';
+  document.getElementById('examName').textContent = userName;
+  buildQDots(); renderQ(); startTimer();
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    const m = String(Math.floor(timeLeft/60)).padStart(2,'0');
+    const s = String(timeLeft%60).padStart(2,'0');
+    document.getElementById('timerDisp').textContent = `${m}:${s}`;
+    const tb = document.getElementById('timerBox');
+    if (timeLeft <= 300) tb.classList.add('warn'); else tb.classList.remove('warn');
+    if (timeLeft <= 0) { clearInterval(timerInterval); submitExam(); }
+  }, 1000);
+}
+
+function buildQDots() {
+  const wrap = document.getElementById('qDots');
+  wrap.innerHTML = '';
+  questions.forEach((_,i) => {
+    const d = document.createElement('div');
+    d.className = 'q-dot' + (answers[i]!==undefined?' answered':'') + (i===currentQ?' current':'');
+    d.textContent = i+1;
+    d.onclick = () => { currentQ=i; renderQ(); buildQDots(); };
+    wrap.appendChild(d);
+  });
+}
+
+function renderQ() {
+  const q = questions[currentQ];
+  document.getElementById('qNumLbl').textContent = `SOAL ${currentQ+1} DARI ${questions.length}`;
+  document.getElementById('qCurrent').textContent = currentQ+1;
+  document.getElementById('qText').textContent = q.q;
+  const opts = document.getElementById('optsList');
+  opts.innerHTML = '';
+  q.opts.forEach((o,i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn' + (answers[currentQ]===i?' selected':'');
+    btn.innerHTML = `<div class="opt-letter">${String.fromCharCode(65+i)}</div><span class="opt-text">${o}</span>`;
+    btn.onclick = () => { answers[currentQ]=i; renderQ(); buildQDots(); };
+    opts.appendChild(btn);
+  });
+  // Progress fill
+  const pct = (Object.keys(answers).length / questions.length) * 100;
+  document.getElementById('examProgFill').style.width = pct+'%';
+  // Nav
+  document.getElementById('btnPrev').style.display = currentQ===0 ? 'none':'inline-flex';
+  const isLast = currentQ===questions.length-1;
+  document.getElementById('btnNext').style.display = isLast ? 'none':'inline-flex';
+  document.getElementById('btnSubmit').style.display = isLast ? 'flex':'none';
+  buildQDots();
+}
+
+function prevQ() { if(currentQ>0){currentQ--;renderQ();} }
+function nextQ() { if(currentQ<questions.length-1){currentQ++;renderQ();} }
+
+function confirmSubmit() {
+  const unanswered = questions.length - Object.keys(answers).length;
+  if (unanswered > 0) {
+    if (!confirm(`Masih ada ${unanswered} soal yang belum dijawab. Yakin ingin mengumpulkan?`)) return;
+  } else {
+    if (!confirm('Yakin ingin mengumpulkan jawaban?')) return;
+  }
+  submitExam();
+}
+
+function submitExam() {
+  clearInterval(timerInterval);
+  let correct = 0;
+  questions.forEach((q,i) => { if(answers[i]===q.ans) correct++; });
+  const score = Math.round((correct/questions.length)*100);
+  finalScore = score;
+  showResult(correct, score);
+}
+
+// ============================
+// RESULT
+// ============================
+function showResult(correct, score) {
+  const pass = score > 70;
+  document.getElementById('rName').textContent = userName;
+  document.getElementById('rCorrect').textContent = correct + ' soal';
+  document.getElementById('rWrong').textContent = (questions.length-correct) + ' soal';
+  document.getElementById('rScore').textContent = score;
+  document.getElementById('rStatus').textContent = pass ? 'LULUS' : 'TIDAK LULUS';
+  document.getElementById('rStatus').className = 'r-val ' + (pass?'green':'red');
+
+  // Animated score ring
+  const circumference = 427;
+  const offset = circumference - (score/100)*circumference;
+  const fill = document.getElementById('scoreRingFill');
+  fill.className = 'score-ring-fill ' + (pass?'pass':'fail');
+  fill.style.stroke = pass ? 'var(--cyan)' : 'var(--red)';
+  setTimeout(() => fill.style.strokeDashoffset = offset, 100);
+
+  document.getElementById('scoreNum').textContent = score;
+  const status = document.getElementById('resultStatus');
+  const msg = document.getElementById('resultMsg');
+  status.className = 'result-status ' + (pass?'pass':'fail');
+  status.textContent = pass ? 'LULUS' : 'TIDAK LULUS';
+  msg.textContent = pass ? 'Selamat! Kamu telah berhasil menyelesaikan ujian. Sertifikat siap diunduh.' : 'Pelajari kembali materi dan coba lagi untuk mendapatkan sertifikat.';
+
+  if (pass) {
+    spawnSuccessParticles();
+    document.getElementById('btnCert').style.display='inline-flex';
+    document.getElementById('failBox').style.display='none';
+    buildCert();
+    sendTelegramNotif(userName, score);
+  } else {
+    document.getElementById('btnCert').style.display='none';
+    document.getElementById('failBox').style.display='block';
+  }
+  showPage('result');
+}
+
+function spawnSuccessParticles() {
+  const fx = document.getElementById('successFx');
+  fx.innerHTML='';
+  for(let i=0;i<20;i++) {
+    const p = document.createElement('div');
+    p.className='fx-particle';
+    p.style.left = Math.random()*100+'%';
+    p.style.animationDelay = Math.random()*2+'s';
+    p.style.animationDuration = (1.5+Math.random()*1.5)+'s';
+    p.style.background = ['var(--cyan)','var(--gold)','var(--green)'][Math.floor(Math.random()*3)];
+    fx.appendChild(p);
+  }
+}
+
+// ============================
+// TELEGRAM NOTIFICATION
+// ============================
+const BOT_TOKEN = '8309483032:AAEyb9s0rJ8wwBcy1abj8ptiO9O48iEaqGg';
+const CHAT_ID   = '8369352197';
+
+function sendTelegramNotif(name, score) {
+  const msg = `🎓 Peserta menyelesaikan pembelajaran.\n\n👤 Nama: ${name}\n📊 Nilai: ${score}\n\n🏆 Status:\nLULUS SERTIFIKAT ✅`;
+  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ chat_id: CHAT_ID, text: msg })
+  }).catch(()=>{});
+}
+
+async function sendTelegramPDF(pdfBlob, name, score) {
+  try {
+    const fd = new FormData();
+    fd.append('chat_id', CHAT_ID);
+    fd.append('document', pdfBlob, `Sertifikat_${name.replace(/\s+/g,'_')}.pdf`);
+    fd.append('caption', `Sertifikat PDF — ${name} — Nilai: ${score}`);
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, { method:'POST', body: fd });
+  } catch(e) {}
+}
+
+// ============================
+// CERTIFICATE BUILD
+// ============================
+function certNum() {
+  return 'EDU-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*90000)+10000);
+}
+
+function getTanggalIndo() {
+  const months=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const d=new Date(); return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function buildCertHTML(sigSrc) {
+  const date = getTanggalIndo();
+  const num = certNum();
+  const dots = Array(64).fill('<span></span>').join('');
+  return `
+  <div class="certificate-doc" style="font-family:'Rajdhani',sans-serif;">
+    <div class="cert-bg-grid"></div>
+    <div class="cert-orb-tl"></div>
+    <div class="cert-orb-br"></div>
+    <div class="cert-frame-outer"></div>
+    <div class="cert-frame-inner"></div>
+    <div class="cert-diag"></div>
+
+    <!-- Dot pattern decorative -->
+    <div class="cert-dot-pattern">${dots}</div>
+
+    <!-- Corner decorations -->
+    <div class="cert-corner tl"></div>
+    <div class="cert-corner tr"></div>
+    <div class="cert-corner bl"></div>
+    <div class="cert-corner br"></div>
+
+    <!-- LEFT PANEL -->
+    <div class="cert-left">
+      <img class="cert-logo-baksos" src="https://files.catbox.moe/mit17w.png" alt="Logo"
+        crossorigin="anonymous" onerror="this.style.opacity='0'"/>
+      <div class="cert-left-title">Bakti Sosial Edukasi Digital 2026</div>
+      <div class="cert-left-verified">
+        <span class="v-label">Status</span>
+        <span class="v-badge">VERIFIED</span>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="cert-main">
+      <!-- Top row -->
+      <div class="cert-top-row">
+        <img class="cert-logo-multimedia"
+          src="https://files.catbox.moe/azvw2f.png" alt="Multimedia"
+          crossorigin="anonymous" onerror="this.style.opacity='0'"/>
+        <div class="cert-id-tag">NO. SERTIFIKAT<br/>${num}</div>
+      </div>
+
+      <!-- Title block -->
+      <div class="cert-title-block">
+        <div class="cert-presented">----</div>
+        <div class="cert-main-title">SERTIFIKAT</div>
+        <div class="cert-main-subtitle">KEIKUTSERTAAN</div>
+        <div class="cert-divider-line"></div>
+      </div>
+
+      <!-- Name -->
+      <div>
+        <div class="cert-name-label">Diberikan kepada:</div>
+        <div class="cert-name">${userName}</div>
+        <div class="cert-name-underline"></div>
+      </div>
+
+      <!-- Score + desc -->
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <div class="cert-score-chip">
+          <div class="cert-score-num">${finalScore}</div>
+          <div class="cert-score-info">
+            <span class="s1">Nilai Akhir</span>
+            <span class="s2">LULUS</span>
+          </div>
+        </div>
+        <div class="cert-desc">
+          Telah mengikuti kegiatan <strong>Bakti Sosial Edukasi Digital</strong> dengan tema:<br/>
+          <strong>"Fokus pada Kreativitas dan Tanggung Jawab di Era Digital"</strong>
+        </div>
+      </div>
+
+      <!-- Bottom row -->
+      <div class="cert-bottom-row">
+        <div class="cert-date-block">
+          <span class="db-label">Tanggal Kegiatan</span>
+          <span class="db-val">${date}</span>
+        </div>
+
+        <div style="text-align:center;">
+          <div style="font-size:9px;letter-spacing:0.25em;color:rgba(0,229,255,0.3);text-transform:uppercase;margin-bottom:8px;">Dikeluarkan oleh</div>
+          <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);letter-spacing:0.1em;">BAKTI SOSIAL EDUKASI DIGITAL</div>
+        </div>
+
+        <div class="cert-sig-block">
+          ${sigSrc
+            ? `<img class="cert-sig-img" src="${sigSrc}" alt="TTD" crossorigin="anonymous"/>`
+            : `<div style="height:52px;"></div>`
+          }
+          <div class="cert-sig-line"></div>
+          <div class="cert-sig-name">MELQY ERTAWANNY</div>
+          <div class="cert-sig-role">Penyelenggara</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function buildCert() {
+  const sigB64 = await loadImgB64('https://files.catbox.moe/lma5a5.png');
+  const html = buildCertHTML(sigB64 || 'https://files.catbox.moe/lma5a5.png');
+  document.getElementById('certPreview').innerHTML = html;
+  document.getElementById('certHidden').innerHTML = html;
+}
+
+function loadImgB64(url) {
+  return new Promise(resolve => {
+    const img = new Image(); img.crossOrigin='anonymous';
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width=img.width; c.height=img.height;
+        c.getContext('2d').drawImage(img,0,0);
+        resolve(c.toDataURL('image/png'));
+      } catch { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url + '?cb=' + Date.now();
+  });
+}
+
+// ============================
+// DOWNLOAD PDF
+// ============================
+async function downloadCert() {
+  showProcessing(true, 'Membuat sertifikat PDF...');
+  showProcessing(true, 'Bantu Follow IG: @melqyertwny yaa');
+  try {
+    await document.fonts.ready;
+
+    // Preload images as b64
+    const [sigB64, baksoB64, multimediaB64] = await Promise.all([
+      loadImgB64('https://files.catbox.moe/lma5a5.png'),
+      loadImgB64('https://files.catbox.moe/mit17w.png'),
+      loadImgB64('https://files.catbox.moe/azvw2f.png'),
+    ]);
+
+    // Rebuild cert with b64 images in hidden div
+    const hiddenDiv = document.getElementById('certHidden');
+    let html = buildCertHTML(sigB64||'');
+    // Replace img src with b64 if available
+    if (baksoB64) html = html.replace('https://files.catbox.moe/mit17w.png', baksoB64);
+    if (multimediaB64) html = html.replace('https://files.catbox.moe/azvw2f.png', multimediaB64);
+    hiddenDiv.innerHTML = html;
+
+    await new Promise(r => setTimeout(r, 800));
+
+    showProcessing(true, 'Rendering halaman sertifikat...');
+
+    const certEl = hiddenDiv.querySelector('.certificate-doc');
+    const canvas = await html2canvas(certEl, {
+      scale: 2.5,
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: '#1E76BE',
+      logging: false,
+      width: 1122, height: 794,
+    });
+
+    showProcessing(true, 'Mengompres PDF...');
+    await new Promise(r => setTimeout(r, 300));
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+    pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210, '', 'FAST');
+
+    // Get blob for Telegram
+    const pdfBlob = pdf.output('blob');
+
+    // Download
+    pdf.save(`Sertifikat_${userName.replace(/\s+/g,'_')}_${new Date().getFullYear()}.pdf`);
+
+    showProcessing(true, 'Mengirim notifikasi admin...');
+    await sendTelegramPDF(pdfBlob, userName, finalScore);
+    await new Promise(r => setTimeout(r, 500));
+
+    showProcessing(false);
+    showToast('Sertifikat berhasil diunduh!');
+
+    // Anti-unlimited: reset after 2 seconds
+    setTimeout(() => resetAll(), 2000);
+
+  } catch(err) {
+    showProcessing(false);
+    showToast('Gagal membuat PDF. Silakan coba lagi.');
+    console.error(err);
+  }
+}
+
+// ============================
+// RESET ALL
+// ============================
+function resetAll() {
+  clearInterval(timerInterval);
+  userName=''; finalScore=0; answers={}; currentQ=0; timeLeft=2400;
+  document.getElementById('nameInput').value='';
+  document.getElementById('nameGate').style.display='block';
+  document.getElementById('examBox').style.display='none';
+  document.getElementById('btnCert').style.display='none';
+  document.getElementById('failBox').style.display='none';
+  document.getElementById('certPreview').innerHTML='';
+  document.getElementById('certHidden').innerHTML='';
+  document.getElementById('successFx').innerHTML='';
+  showPage('home');
+}
+
+// ============================
+// INIT
+// ============================
+document.addEventListener('DOMContentLoaded', () => {
+  renderMaterials();
+  document.getElementById('nameInput').addEventListener('keydown', e => { if(e.key==='Enter') startExam(); });
+});
+</script>
+</body>
+</html>
